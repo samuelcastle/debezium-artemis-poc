@@ -1,23 +1,38 @@
+# Debezium to ActiveMQ artemis - PoC
 
 
-## Test setup
-
-### MySQL database
+## Quick start
 
 ```bash
-docker run -it --rm \
-    --name mysql \
-    -p 3306:3306 \ 
-    -e MYSQL_ROOT_PASSWORD=debezium \
-    -e MYSQL_USER=mysqluser \
-    -e MYSQL_PASSWORD=mysqlpw \
-    debezium/example-mysql:0.9
-    
-docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:0.9
-	
+# Start an activeMQ instance
+docker run -it --rm -p 8161:8161 -p 61616:61616 vromero/activemq-artemis
+
+# Start an MySQL example database
+docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:1.2
+
+# Run debezium engine
+mvn exec:java@MyDebeziumEngine
+
 ```
 
-Run test sql statements:
+Now you'll have the essential components running. To verify if the CDC events are correctly propagated:
+
+```bash
+# Run ActiveMQ listener (in seperate console)s
+mvn exec:java@Listener
+
+# Make some changes in MySQL (password see config file)
+docker exec -it mysql bin/bash
+mysql -u mysqluser -p
+use inventory;
+UPDATE customers SET first_name = "John" where id = "1001";
+
+```
+
+## Development
+
+
+Some usefull mysql commands:
 
 ```bash
 docker exec -it mysql bin/bash
@@ -32,6 +47,8 @@ GRANT SUPER ON *.* TO 'mysqluser'@'%';
 GRANT RELOAD ON *.* TO 'mysqluser'@'%';
 GRANT REPLICATION SLAVE ON *.* TO 'mysqluser'@'%';
 
+GRANT REPLICATION CLIENT, SUPER ON *.* TO 'mysqluser'@'%';
+
 GRANT ALL ON *.* TO 'mysqluser'@'%';
 
 # login as same user as java app
@@ -43,28 +60,18 @@ use inventory;
 show tables;
 SELECT * FROM customers;
 
-INSERT INTO customers VALUES ( 1005, 'Samuel', 'Vandecasteele', 'samuel.vandecasteele@i8c.be');
-INSERT INTO customers (first_name, last_name, email) VALUES ( 'Jozef', 'Verbeek', 'jverbeek@era.be');
+INSERT INTO customers VALUES ( 1005, 'John', 'Gandalf', 'john.gandalf@example.com');
+INSERT INTO customers (first_name, last_name, email) VALUES ( 'John', 'Gandalf', 'john.gandalf@example.com');
 
-UPDATE customers SET email = "vandecasteele.samuel@gmail.com" WHERE id = '1005';
+UPDATE customers SET email = "john.gandalf@example.com" WHERE id = '1005';
 ```
 
+Login into artemis web console:
 
-
-### ActiveMQ Artemis
-
-```bash
-docker run -it --rm \
-  -p 8161:8161 \
-  -p 61616:61616 \
-  vromero/activemq-artemis
-
-```
 Open browser on ``http://127.0.0.1:8161/`` 
 * username: artemis
 * password: simetraehcapa
 
 
-
-Reference:
+## Reference:
 * https://github.com/vromero/activemq-artemis-docker
