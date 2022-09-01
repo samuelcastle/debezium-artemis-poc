@@ -13,7 +13,7 @@
 		<log4j2-version>2.13.2</log4j2-version>
 		<version.debezium>1.2.0.Beta2</version.debezium>
 <!-- 		<version.debezium>1.1.0.Final</version.debezium> -->
-		<version.activemq>2.12.0</version.activemq>
+		<version.activemq>2.19.1</version.activemq>
 		<version.jackson>2.11.0</version.jackson>
 	</properties>
 
